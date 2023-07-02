@@ -1,32 +1,34 @@
-from flask import Flask, render_template, request, url_for, flash, redirect
+from flask import Flask, render_template, redirect, url_for
+from forms import CourseForm
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'b7c08d8c7423a6ae2529ab67441cf3ed7f9048cfedfb1fe0'
+app.config['SECRET_KEY'] = 'my secret key'
 
-messages = [{
-    'title': 'Message One', 'content': 'Message One Content'
-}, {
-    'title': 'Message two', 'content': 'Message Two Content'
-}]
+courses_list = [{
+        'title': 'Python 101',
+        'description': 'Learn Python basics',
+        'price': 34,
+        'available': True,
+        'level': 'Beginner'
+    }]
 
-@app.route('/')
+@app.route('/', methods=('GET', 'POST'))
 def index():
-    return render_template('index.html', messages=messages)
+    form = CourseForm()
+    if form.validate_on_submit():
+        courses_list.append({
+            'title': form.title.data,
+            'description': form.description.data,
+            'available': form.available.data,
+            'price': form.price.data,
+            'level': form.level.data
+        })
+        return redirect(url_for('courses'))
+    return render_template('index.html', form=form)
 
-@app.route('/create/', methods=('GET', 'POST'))
-def create():
-    if request.method == 'POST':
-        title = request.form['title']
-        content = request.form['content']
-        if not title:
-            flash('Title is required')
-        elif not content:
-            flash('Content is required')
-        else:
-            messages.append({'title': title, 'content': content})
-            return redirect(url_for('index'))
-
-    return render_template('create.html')
+@app.route('/courses/')
+def courses():
+    return render_template('courses.html', courses_list=courses_list)
 
 if __name__ == '__main__':
     app.run(debug=True)
